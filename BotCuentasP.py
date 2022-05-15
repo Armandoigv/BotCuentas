@@ -152,7 +152,7 @@ if __name__ == '__main__':
     # Pequeña pausa para que se elimine el webhook
     time.sleep(1)
     # Definimos el webhook
-    bot.set_webhook(url= ngrok_url)
+    bot.set_webhook(url= "https://botcuentas.herokuapp.com/")
     # arrancamos el servidor
     #web_server.run(host="0.0.0.0", port=5000)
     serve(web_server, host = '0.0.0.0', port =5000)
