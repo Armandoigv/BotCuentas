@@ -14,7 +14,7 @@ from waitress import serve # Para ejecutar el servidor en un entorno de producci
 # Librerias web hook 
 
 from flask import Flask, request # Para crear el servidor web (red domestica)
-from pyngrok import ngrok, conf # Para crear un tunel entre nuestro servidor web local e internet (URL PUBLICA)
+#from pyngrok import ngrok, conf # Para crear un tunel entre nuestro servidor web local e internet (URL PUBLICA)
 
 # Detener ejecución con control C
 
@@ -112,7 +112,6 @@ def guardar_datos_usuario(message):
     sh.append_row([str(gastos[message.chat.id]['gasto']), str(gastos[message.chat.id]['monto']), str(gastos[message.chat.id]['banco_entrada']), str(gastos[message.chat.id]['banco_salida'])])
     markup = ReplyKeyboardRemove()
     bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
-    print(gastos)
     df = pd.DataFrame.from_dict(gastos)
     df.to_csv (r'gastos_telegram.csv', index = False, header=True)
     
@@ -139,15 +138,15 @@ def cmd_TotalCuentas(message):
 
 if __name__ == '__main__':
     print("Iniciando el bot")
-    conf.get_default.config_path = "./config_ngrok.yml"
-    conf.get_default().region = "sa"
+    #conf.get_default.config_path = "./config_ngrok.yml"
+    #conf.get_default().region = "sa"
     # Creamos el archivo de credenciales de la API de NGROK
-    ngrok.set_auth_token(NGROK_TOKEN)
+    #ngrok.set_auth_token(NGROK_TOKEN)
     # Creamos un tunel HTTPS en el puerto 5000
-    ngrok_tunel = ngrok.connect(5000, bind_tls=True)
+    #ngrok_tunel = ngrok.connect(5000, bind_tls=True)
     # url del tunel https creado
-    ngrok_url = ngrok_tunel.public_url
-    print("URL NGROG:", ngrok_url)
+    #ngrok_url = ngrok_tunel.public_url
+    #print("URL NGROG:", ngrok_url)
     # Eliminamos el webhook
     bot.remove_webhook()
     # Pequeña pausa para que se elimine el webhook

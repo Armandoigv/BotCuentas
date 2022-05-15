@@ -5,3 +5,4 @@ gspread
 datetime
 matplotlib
 waitress 
+gunicorn
