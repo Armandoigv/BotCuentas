@@ -1,0 +1,7 @@
+telebot 
+time
+pandas 
+gspread
+datetime
+matplotlib
+waitress 
