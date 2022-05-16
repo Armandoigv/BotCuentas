@@ -5,4 +5,3 @@ pandas==1.4.2
 pyTelegramBotAPI==4.5.1
 waitress==2.1.1
 datetime
-gunicorn
