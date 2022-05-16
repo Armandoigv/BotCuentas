@@ -10,30 +10,21 @@ import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 from waitress import serve # Para ejecutar el servidor en un entorno de produccion
-
-# Librerias web hook 
-
 from flask import Flask, request # Para crear el servidor web (red domestica)
-#from pyngrok import ngrok, conf # Para crear un tunel entre nuestro servidor web local e internet (URL PUBLICA)
 
-# Detener ejecución con control C
-
-# Instanciamos el bot de telegram
-# Con clase de libreria Telebot
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-
-# Instanciamos el servidor web de Flask
-
 web_server = Flask(__name__)
 
+#hilo = threading.Thread(name = "hilo_web_server", target = arrancar_web_server)
+
 # Gestiona las peticiones POST enviadas al servidor web
-@web_server.route('/', methods = ['POST'])
-def webhook():
-    # Si el post recibido es un JSON
-    if request.headers.get("content-type") == "application/json":
-        update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
-        bot.process_new_updates([update])
-        return "OK", 200
+# @web_server.route('/', methods = ['POST'])
+# def webhook():
+#     # Si el post recibido es un JSON
+#     if request.headers.get("content-type") == "application/json":
+#         update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+#         bot.process_new_updates([update])
+#         return "OK", 200
 
 gastos = {} # Crear diccionario
 cuentass = {}

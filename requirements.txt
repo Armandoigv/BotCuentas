@@ -1,7 +1,8 @@
-telebot 
-pandas 
-gspread
+Flask==2.1.1
+gspread==5.3.2
+matplotlib==3.5.1
+pandas==1.4.2
+pyTelegramBotAPI==4.5.1
+waitress==2.1.1
 datetime
-matplotlib
-waitress 
 gunicorn
