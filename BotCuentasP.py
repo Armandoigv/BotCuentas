@@ -17,7 +17,7 @@ web_server = Flask(__name__)
 
 #hilo = threading.Thread(name = "hilo_web_server", target = arrancar_web_server)
 
-Gestiona las peticiones POST enviadas al servidor web
+#Gestiona las peticiones POST enviadas al servidor web
 @web_server.route('/', methods = ['POST'])
 def webhook():
     # Si el post recibido es un JSON
