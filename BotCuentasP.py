@@ -11,6 +11,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from waitress import serve # Para ejecutar el servidor en un entorno de produccion
 from flask import Flask, request # Para crear el servidor web (red domestica)
+import os 
+import sys
+import threading
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 web_server = Flask(__name__)
@@ -125,22 +128,29 @@ def cmd_TotalCuentas(message):
 
 # Escritura de programa principal
 
+def polling():
+    bot.remove_webhook()
+    time.sleep(1)
+    bot.infinity_polling()
+
+def arrancar_web_server():
+    bot.remove_webhook()
+    time.sleep(1)
+    bot.set_webhook(url= 'https://botcuentas.herokuapp.com/')
+    serve(web_server, host = '0.0.0.0', port = int(os.environ.get('PORT',5000)))
+
+
+
 # MAIN ##################
 
 if __name__ == '__main__':
     print("Iniciando el bot")
-    # Eliminamos el webhook
-    bot.remove_webhook()
-    # Pequeña pausa para que se elimine el webhook
-    time.sleep(1)
-    # Definimos el webhook
-    bot.set_webhook(url= "https://botcuentas.herokuapp.com/")
-    # arrancamos el servidor
-    #web_server.run(host="0.0.0.0", port=5000)
-    serve(web_server, host = '0.0.0.0', port =5000)
-
-    # el codigo se detiene al instanciar el servidor
-
+    if os.environ.get("DYNO_RAM"):
+        hilo = threading.Thread(name = "hilo_web_server", target = arrancar_web_server)
+        #pass #iniciamos el servidor web
+    else:
+        hilo = threading.Thread(name = "hilo_polling", target = polling)
     
-    # Ejecutamos un metodo del objeto bot que comprueba si se reciben mensajes nuevos
-    #bot.infinity_polling()
+    # Iniciamos el hilo que corresponda
+    hilo.start()
+
