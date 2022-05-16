@@ -17,14 +17,14 @@ web_server = Flask(__name__)
 
 #hilo = threading.Thread(name = "hilo_web_server", target = arrancar_web_server)
 
-# Gestiona las peticiones POST enviadas al servidor web
-# @web_server.route('/', methods = ['POST'])
-# def webhook():
-#     # Si el post recibido es un JSON
-#     if request.headers.get("content-type") == "application/json":
-#         update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
-#         bot.process_new_updates([update])
-#         return "OK", 200
+Gestiona las peticiones POST enviadas al servidor web
+@web_server.route('/', methods = ['POST'])
+def webhook():
+    # Si el post recibido es un JSON
+    if request.headers.get("content-type") == "application/json":
+        update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
+        bot.process_new_updates([update])
+        return "OK", 200
 
 gastos = {} # Crear diccionario
 cuentass = {}
@@ -129,15 +129,6 @@ def cmd_TotalCuentas(message):
 
 if __name__ == '__main__':
     print("Iniciando el bot")
-    #conf.get_default.config_path = "./config_ngrok.yml"
-    #conf.get_default().region = "sa"
-    # Creamos el archivo de credenciales de la API de NGROK
-    #ngrok.set_auth_token(NGROK_TOKEN)
-    # Creamos un tunel HTTPS en el puerto 5000
-    #ngrok_tunel = ngrok.connect(5000, bind_tls=True)
-    # url del tunel https creado
-    #ngrok_url = ngrok_tunel.public_url
-    #print("URL NGROG:", ngrok_url)
     # Eliminamos el webhook
     bot.remove_webhook()
     # Pequeña pausa para que se elimine el webhook
