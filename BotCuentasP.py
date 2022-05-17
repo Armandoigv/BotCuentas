@@ -169,7 +169,7 @@ def cmd_TotalCuentas(message):
     bot.reply_to(message, Total, reply_markup= markup)
     df.plot(kind="bar")
     plt.savefig('imoo.png')
-    bot.send_photo(message.chat.id, photo=open('.\imoo.png', 'rb'))
+    bot.send_photo(message.chat.id, photo=open('imoo.png', 'rb'))
     #bot.send_photo(message.chat.id, photo=plt.show())
     
 
