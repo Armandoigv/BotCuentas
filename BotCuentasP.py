@@ -30,7 +30,6 @@ def webhook():
         return "OK", 200
 
 gastos = {} # Crear diccionario
-cuentass = {}
 
 # responde al comando /start
 
@@ -53,22 +52,56 @@ def cmd_start(message):
 @bot.message_handler(commands = ['cuentas'])
 def cmd_cuentas(message):
     """En que se gasto"""
+    #print(datetime.date(message.date))
     markup = ForceReply()
-    msg = bot.send_message(message.chat.id, "En que se gasto?", reply_markup= markup)
+    msg = bot.send_message(message.chat.id, "Hola!,En que se gastó?", reply_markup= markup)
     bot.register_next_step_handler(msg, monto)
 
 def monto(message):
     """Cuanto se gasto?"""
     gastos[message.chat.id] = {}
-    #gastos[message.date] = {}
+    fecha = datetime.datetime.fromtimestamp(message.date)
+    gastos[message.chat.id]['fecha'] = fecha
     gastos[message.chat.id]['gasto'] = message.text
-    #gastos[message.date]['gasto'] = message.text
     markup = ForceReply()
-    msg = bot.send_message(message.chat.id, "Cuanto se gasto?", reply_markup= markup)
+    msg = bot.send_message(message.chat.id, "Cuánto se gasto?", reply_markup= markup)
+    bot.register_next_step_handler(msg, tipo)
+
+def tipo(message):
+    gastos[message.chat.id]['monto'] = message.text
+    markup = ReplyKeyboardMarkup(
+            one_time_keyboard=True,
+            input_field_placeholder="Pulsa un banco",
+            resize_keyboard=True
+            )
+    markup.add("ENTRADA", "SALIDA")
+    msg = bot.send_message(message.chat.id,"Que tipo de gasto es?", reply_markup= markup)
+    bot.register_next_step_handler(msg, acumula)
+
+def acumula(message):
+    gastos[message.chat.id]['tipo'] = message.text
+    markup = ReplyKeyboardMarkup(
+            one_time_keyboard=True,
+            input_field_placeholder="Pulsa un banco",
+            resize_keyboard=True
+            )
+    markup.add("VERDADERO", "FALSO")
+    msg = bot.send_message(message.chat.id,"Acumula puntos?", reply_markup= markup)
+    bot.register_next_step_handler(msg, cargo)
+
+def cargo(message):
+    gastos[message.chat.id]['acumula'] = message.text
+    markup = ReplyKeyboardMarkup(
+            one_time_keyboard=True,
+            input_field_placeholder="Pulsa un banco",
+            resize_keyboard=True
+            )
+    markup.add("BICICLETA", "YO", "TRANSPORTE","OCIO","COMIDA","CUENTAS YO", "GREEMB", "MAMA")
+    msg = bot.send_message(message.chat.id,"Tipo de Gasto?", reply_markup= markup)
     bot.register_next_step_handler(msg, preguntar_banco_entrada)
 
 def preguntar_banco_entrada(message):
-    gastos[message.chat.id]['monto'] = message.text
+    gastos[message.chat.id]['cargo'] = message.text
     #gastos[message.date]['monto'] = message.text     
     markup = ReplyKeyboardMarkup(
             one_time_keyboard=True,
@@ -94,8 +127,12 @@ def preguntar_banco_salida(message):
 def guardar_datos_usuario(message):
     gastos[message.chat.id]['banco_salida'] = message.text
     texto = 'Datos Introducidos\n' 
+    texto += f"Gasto:{gastos[message.chat.id]['fecha']}\n"  
     texto += f"Gasto:{gastos[message.chat.id]['gasto']}\n"
     texto += f"Monto:{gastos[message.chat.id]['monto']}\n"
+    texto += f"Monto:{gastos[message.chat.id]['tipo']}\n"
+    texto += f"Monto:{gastos[message.chat.id]['acumula']}\n"
+    texto += f"Monto:{gastos[message.chat.id]['cargo']}\n"
     texto += f"Banco entrada:{gastos[message.chat.id]['banco_entrada']}\n"
     texto += f"Banco entrada:{gastos[message.chat.id]['banco_salida']}\n"
 
@@ -103,7 +140,16 @@ def guardar_datos_usuario(message):
     gc = gspread.service_account(filename= 'creds.json')
     # Cargar libro excel de google sheets
     sh = gc.open('CuentasAGV').sheet1
-    sh.append_row([str(gastos[message.chat.id]['gasto']), str(gastos[message.chat.id]['monto']), str(gastos[message.chat.id]['banco_entrada']), str(gastos[message.chat.id]['banco_salida'])])
+    sh.append_row(
+        [str(gastos[message.chat.id]['gasto']),
+        str(gastos[message.chat.id]['monto']),
+        str(gastos[message.chat.id]['banco_entrada']),
+        str(gastos[message.chat.id]['banco_salida']),
+        str(gastos[message.chat.id]['fecha']),
+        str(gastos[message.chat.id]['tipo']),
+        str(gastos[message.chat.id]['acumula']),
+        str(gastos[message.chat.id]['cargo'])]
+        )
     markup = ReplyKeyboardRemove()
     bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
     df = pd.DataFrame.from_dict(gastos)
@@ -122,8 +168,9 @@ def cmd_TotalCuentas(message):
     markup = ReplyKeyboardRemove()
     bot.reply_to(message, Total, reply_markup= markup)
     df.plot(kind="bar")
-    plt.savefig('foo.png')
-    bot.send_photo(message.chat.id, photo=open(r'C:\Users\INCOLUR\Mi unidad\08. Formación\Telegram\foo.png', 'rb'))
+    plt.savefig('imoo.png')
+    bot.send_photo(message.chat.id, photo=open('.\imoo.png', 'rb'))
+    #bot.send_photo(message.chat.id, photo=plt.show())
     
 
 # Escritura de programa principal
