@@ -5,6 +5,7 @@ from telebot.types import ReplyKeyboardMarkup # Para crear botones
 from telebot.types import ForceReply
 import pandas as pd
 from telebot.types import ReplyKeyboardRemove
+from telebot.types import BotCommand
 import gspread
 import datetime
 import pandas as pd
@@ -14,9 +15,15 @@ from flask import Flask, request # Para crear el servidor web (red domestica)
 import os 
 import sys
 import threading
+from pandas.plotting import table 
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 web_server = Flask(__name__)
+
+gc = gspread.service_account(filename= 'creds.json')
+sh = gc.open('CuentasAGV').sheet1
+diccionario  =  sh.get_all_records()
+df = pd.DataFrame(diccionario)
 
 #hilo = threading.Thread(name = "hilo_web_server", target = arrancar_web_server)
 
@@ -68,7 +75,7 @@ def monto(message):
     bot.register_next_step_handler(msg, tipo)
 
 def tipo(message):
-    gastos[message.chat.id]['monto'] = message.text
+    gastos[message.chat.id]['monto'] = int(message.text)
     markup = ReplyKeyboardMarkup(
             one_time_keyboard=True,
             input_field_placeholder="Pulsa un banco",
@@ -135,14 +142,10 @@ def guardar_datos_usuario(message):
     texto += f"Monto:{gastos[message.chat.id]['cargo']}\n"
     texto += f"Banco entrada:{gastos[message.chat.id]['banco_entrada']}\n"
     texto += f"Banco entrada:{gastos[message.chat.id]['banco_salida']}\n"
-
-    # Cargar credenciales descargadas de tu cuenta gmail
-    gc = gspread.service_account(filename= 'creds.json')
-    # Cargar libro excel de google sheets
-    sh = gc.open('CuentasAGV').sheet1
-    sh.append_row(
+    if gastos[message.chat.id]['cargo'] == "BICICLETA":
+        sh.append_row(
         [str(gastos[message.chat.id]['gasto']),
-        str(gastos[message.chat.id]['monto']),
+        int(gastos[message.chat.id]['monto']),
         str(gastos[message.chat.id]['banco_entrada']),
         str(gastos[message.chat.id]['banco_salida']),
         str(gastos[message.chat.id]['fecha']),
@@ -150,28 +153,95 @@ def guardar_datos_usuario(message):
         str(gastos[message.chat.id]['acumula']),
         str(gastos[message.chat.id]['cargo'])]
         )
+        sh.append_row(
+        [str(gastos[message.chat.id]['gasto']),
+        int(gastos[message.chat.id]['monto']*-1),
+        str(gastos[message.chat.id]['banco_salida']),
+        str(gastos[message.chat.id]['banco_entrada']),
+        str(gastos[message.chat.id]['fecha']),
+        str(gastos[message.chat.id]['tipo']),
+        str(gastos[message.chat.id]['acumula']),
+        str(gastos[message.chat.id]['cargo'])]
+        )
+    else:
+        sh.append_row(
+        [str(gastos[message.chat.id]['gasto']),
+        int(gastos[message.chat.id]['monto']),
+        str(gastos[message.chat.id]['banco_entrada']),
+        str(gastos[message.chat.id]['banco_salida']),
+        str(gastos[message.chat.id]['fecha']),
+        str(gastos[message.chat.id]['tipo']),
+        str(gastos[message.chat.id]['acumula']),
+        str(gastos[message.chat.id]['cargo'])]
+        )    
     markup = ReplyKeyboardRemove()
     bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
-    df = pd.DataFrame.from_dict(gastos)
-    df.to_csv (r'gastos_telegram.csv', index = False, header=True)
-    
-@bot.message_handler(commands = ['TotalCuentas'])
-def cmd_TotalCuentas(message):
-    """En que se gasto"""
-    # Cargar credenciales descargadas de tu cuenta gmail
-    gc = gspread.service_account(filename= 'creds.json')
-    # Cargar libro excel de google sheets
-    sh = gc.open('CuentasAGV').sheet1
-    diccionario  =  sh.get_all_records()
-    df = pd.DataFrame(diccionario)
+   
+@bot.message_handler(commands = ['totalcuentas'])
+def cmd_totalcuentas(message):
+    table = pd.pivot_table(data=df,index=['Banco de entrada'])
     Total = df['Monto'].sum()
     markup = ReplyKeyboardRemove()
     bot.reply_to(message, Total, reply_markup= markup)
-    df.plot(kind="bar")
+    #dfSCOT = df[df['Banco de entrada'] == "SCOT"] 
+    #dfSCOT.plot(x ='Banco de entrada', y='Monto',kind="bar")
+    table.plot(kind="bar")
+    #.yaxis.set_major_formatter('${x:1.2f}')
     plt.savefig('imoo.png')
     bot.send_photo(message.chat.id, photo=open('imoo.png', 'rb'))
     #bot.send_photo(message.chat.id, photo=plt.show())
     
+
+@bot.message_handler(commands = ['cuentastabla'])
+def cmd_cuentastabla(message):
+    table = pd.pivot_table(data=df,index=['Banco de entrada'],values = ['Monto'])
+    texto = 'Datos Introducidos\n'
+    for count,ele in enumerate(table['Monto']):
+        a ="${:,.1f}".format(ele)
+        b=""
+        c=len(max(list(table.index), key=len))-len(table.index[count])+1
+        texto += f"B:{table.index[count]}"+ b.ljust(c)+f"<u>M: {a}</u>\n"  
+    markup = ReplyKeyboardRemove()
+    texto = "<pre>"+texto+"</pre>"
+    bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
+  
+@bot.message_handler(commands = ['cuentashtml'])
+def cmd_cuentashtml(message):
+    tabla2 = df[df['Banco de entrada'] =="SCOT"][["Fecha"]]
+    texto = 'Datos Introducidos\n'
+    for count,ele in enumerate(table['Monto']):
+        a ="${:,.1f}".format(ele)
+        b=""
+        c=len(max(list(table.index), key=len))-len(table.index[count])+1
+        texto += f"B:{tabla2[count]}"+ b.ljust(c)+f"<u>M: {a}</u>\n"  
+    markup = ReplyKeyboardRemove()
+    texto = "<pre>"+texto+"</pre>"
+    markup = ReplyKeyboardRemove()
+    bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
+
+@bot.message_handler(commands = ['cuentasbip'])
+def cmd_cuentasbip(message):
+    #testo.split()
+    #testo.split()[1:]
+    #" ".join(testo.split()[1:])
+    monto = " ".join(message.text.split()[1:])
+    # Si no se han pasado parametros
+    if not monto:
+        texto = "Debes introducir una busqueda.\n"
+        texto+= "Ejemplo:\n"
+        texto+= f'<code>{message.text} hola mundo </code>'
+        bot.send_message(message.chat.id, texto,parse_mode="html")
+        return 1
+    else:
+        fecha = datetime.datetime.fromtimestamp(message.date)
+        print(fecha)
+        sh.append_row(["BIP",int(monto),"CMR","GASTO",str(fecha),"CMR","VERDADERO","TRANSPORTE"])
+        texto = "Transporte añadido"
+        markup = ReplyKeyboardRemove()
+        bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
+
+
+
 
 # Escritura de programa principal
 
@@ -186,11 +256,17 @@ def arrancar_web_server():
     bot.set_webhook(url= 'https://botcuentas.herokuapp.com/')
     serve(web_server, host = '0.0.0.0', port = int(os.environ.get('PORT',5000)))
 
-
-
 # MAIN ##################
 
 if __name__ == '__main__':
+    bot.set_my_commands([
+        telebot.types.BotCommand('/start', 'da la2'),
+        telebot.types.BotCommand('/cuentas', 'da la b'),
+        telebot.types.BotCommand('/totalcuentas', 'da saa'),
+        telebot.types.BotCommand('/cuentastabla', 'da lasa venid'),
+        telebot.types.BotCommand('/cuentashtml', 'da'),
+        telebot.types.BotCommand('/cuentasbip', 'da asnida')
+        ])
     print("Iniciando el bot")
     if os.environ.get("DYNO_RAM"):
         hilo = threading.Thread(name = "hilo_web_server", target = arrancar_web_server)
