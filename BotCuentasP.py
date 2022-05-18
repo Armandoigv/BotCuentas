@@ -209,10 +209,10 @@ def cmd_cuentastabla(message):
 def cmd_cuentashtml(message):
     tabla2 = df[df['Banco de entrada'] =="SCOT"][["Fecha"]]
     texto = 'Datos Introducidos\n'
-    for count,ele in enumerate(table['Monto']):
+    for count,ele in enumerate(tabla2['Monto']):
         a ="${:,.1f}".format(ele)
         b=""
-        c=len(max(list(table.index), key=len))-len(table.index[count])+1
+        c=len(max(list(tabla2.index), key=len))-len(tabla2.index[count])+1
         texto += f"B:{tabla2[count]}"+ b.ljust(c)+f"<u>M: {a}</u>\n"  
     markup = ReplyKeyboardRemove()
     texto = "<pre>"+texto+"</pre>"
