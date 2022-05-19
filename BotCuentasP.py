@@ -22,8 +22,11 @@ web_server = Flask(__name__)
 
 gc = gspread.service_account(filename= 'creds.json')
 sh = gc.open('CuentasAGV').sheet1
+sh2 = gc.open('CuentasAGV').get_worksheet(1)
 diccionario  =  sh.get_all_records()
+diccionario2  =  sh2.get_all_records()
 df = pd.DataFrame(diccionario)
+df2 = pd.DataFrame(diccionario2)
 
 #hilo = threading.Thread(name = "hilo_web_server", target = arrancar_web_server)
 
@@ -179,16 +182,31 @@ def guardar_datos_usuario(message):
    
 @bot.message_handler(commands = ['totalcuentas'])
 def cmd_totalcuentas(message):
+    gc = gspread.service_account(filename= 'creds.json')
+    sh = gc.open('CuentasAGV').sheet1
+    sh2 = gc.open('CuentasAGV').get_worksheet(1)
+    diccionario  =  sh.get_all_records()
+    diccionario2  =  sh2.get_all_records()
+    df = pd.DataFrame(diccionario)
+    df2 = pd.DataFrame(diccionario2)
     table = pd.pivot_table(data=df,index=['Banco de entrada'])
     Total = df['Monto'].sum()
+    fecha = datetime.datetime.fromtimestamp(message.date)
+    sh2.append_row([str(fecha),int(Total)])
     markup = ReplyKeyboardRemove()
-    bot.reply_to(message, Total, reply_markup= markup)
+    bot.reply_to(message,"${:,.1f}".format(Total), reply_markup= markup)
     #dfSCOT = df[df['Banco de entrada'] == "SCOT"] 
     #dfSCOT.plot(x ='Banco de entrada', y='Monto',kind="bar")
     table.plot(kind="bar")
     #.yaxis.set_major_formatter('${x:1.2f}')
+    plt.tight_layout()
     plt.savefig('imoo.png')
+    df2.plot(x="Fecha",kind="line")
+    plt.xticks(rotation=270)
+    plt.tight_layout()
+    plt.savefig('imoos.png')
     bot.send_photo(message.chat.id, photo=open('imoo.png', 'rb'))
+    bot.send_photo(message.chat.id, photo=open('imoos.png', 'rb'))
     #bot.send_photo(message.chat.id, photo=plt.show())
     
 
@@ -260,12 +278,12 @@ def arrancar_web_server():
 
 if __name__ == '__main__':
     bot.set_my_commands([
-        telebot.types.BotCommand('/start', 'da la2'),
-        telebot.types.BotCommand('/cuentas', 'da la b'),
-        telebot.types.BotCommand('/totalcuentas', 'da saa'),
-        telebot.types.BotCommand('/cuentastabla', 'da lasa venid'),
-        telebot.types.BotCommand('/cuentashtml', 'da'),
-        telebot.types.BotCommand('/cuentasbip', 'da asnida')
+        telebot.types.BotCommand('/start', 'Inicio del bot'),
+        telebot.types.BotCommand('/cuentas', 'Añade gasto o ingreso'),
+        telebot.types.BotCommand('/totalcuentas', 'Balance total'),
+        telebot.types.BotCommand('/cuentastabla', 'Balance por banco'),
+        telebot.types.BotCommand('/cuentashtml', 'Detalle por Banco'),
+        telebot.types.BotCommand('/cuentasbip', 'Añade gasto frecuente')
         ])
     print("Iniciando el bot")
     if os.environ.get("DYNO_RAM"):
