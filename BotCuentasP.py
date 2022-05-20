@@ -225,15 +225,47 @@ def cmd_cuentastabla(message):
   
 @bot.message_handler(commands = ['cuentashtml'])
 def cmd_cuentashtml(message):
-    tabla2 = df[df['Banco de entrada'] =="SCOT"][["Fecha"]]
+    banco = " ".join(message.text.split()[1:])
+    tabla2 = df[df['Banco de entrada'] ==banco][["Monto","Gasto","Fecha"]]
     texto = 'Datos Introducidos\n'
-    for count,ele in enumerate(tabla2['Monto']):
-        a ="${:,.1f}".format(ele)
-        b=""
-        c=len(max(list(tabla2.index), key=len))-len(tabla2.index[count])+1
-        texto += f"B:{tabla2[count]}"+ b.ljust(c)+f"<u>M: {a}</u>\n"  
+    for i in tabla2.index:
+        a ="${:,.1f}".format(tabla2['Monto'][i])
+        b = tabla2['Gasto'][i]
+        c = tabla2['Fecha'][i][:-5]
+        texto += c + " " + a + " " + b + "\n"
+
+    #for gasto, monto in tabla2['Gasto','Monto']:
+    #    print(gasto, monto)
+        #a ="${:,.1f}".format(ele)
+        #b=""
+        #c=len(max(list(tabla2.index), key=len))-len(tabla2.index[count])+1
+        #texto += f"B:{tabla2[count]}"+ b.ljust(c)+f"<u>M: {a}</u>\n"  
     markup = ReplyKeyboardRemove()
-    texto = "<pre>"+texto+"</pre>"
+    #texto = "<pre>"+texto+"</pre>"
+    markup = ReplyKeyboardRemove()
+    bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
+
+@bot.message_handler(commands = ['cuentashtml2'])
+def cmd_cuentashtml2(message):  
+    markup = ReplyKeyboardMarkup(
+            one_time_keyboard=True,
+            input_field_placeholder="Pulsa un banco",
+            resize_keyboard=True
+            )
+    markup.add("SCOT", "ITAU", "MPA", "MPD", "FPAYA", "FPAYD", "CHILEA","CHILED", "MACHA","MACHD","ACTIVOS","LIDERA", "CMR", "CHECKA","CHECKD")
+    msg = bot.send_message(message.chat.id,"Desde que banco?", reply_markup= markup)
+    bot.register_next_step_handler(msg, cuentashtml2s)
+
+def cuentashtml2s(message):
+    banco = message.text
+    print(banco)
+    tabla2 = df[df['Banco de entrada'] ==banco][["Monto","Gasto","Fecha"]]
+    texto = 'Datos Introducidos\n'
+    for i in tabla2.index:
+        a ="${:,.1f}".format(tabla2['Monto'][i])
+        b = tabla2['Gasto'][i]
+        c = tabla2['Fecha'][i][:-5]
+        texto += c + " " + a + " " + b + "\n" 
     markup = ReplyKeyboardRemove()
     bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
 
@@ -282,7 +314,7 @@ if __name__ == '__main__':
         telebot.types.BotCommand('/cuentas', 'Añade gasto o ingreso'),
         telebot.types.BotCommand('/totalcuentas', 'Balance total'),
         telebot.types.BotCommand('/cuentastabla', 'Balance por banco'),
-        telebot.types.BotCommand('/cuentashtml', 'Detalle por Banco'),
+        telebot.types.BotCommand('/cuentashtml2', 'Detalle por Banco'),
         telebot.types.BotCommand('/cuentasbip', 'Añade gasto frecuente')
         ])
     print("Iniciando el bot")
