@@ -319,7 +319,7 @@ def cmd_pdfg(message):
     headers = {'Authorization': 'Bearer ' + credentials.create_delegated("vagvasquez1234@gmail.com").get_access_token().access_token}
     res = requests.get(url, headers=headers)
     #https://www.programcreek.com/python/example/121567/google.oauth2.credentials.Credentials
-    https://google-auth.readthedocs.io/en/stable/reference/google.oauth2.credentials.html
+    #https://google-auth.readthedocs.io/en/stable/reference/google.oauth2.credentials.html
     #res = requests.get(url)
     with open('CuentasAGV' + ".pdf", 'wb') as f:
         f.write(res.content)
