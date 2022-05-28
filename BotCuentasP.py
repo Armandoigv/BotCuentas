@@ -16,6 +16,9 @@ import os
 import sys
 import threading
 from pandas.plotting import table 
+from google.oauth2 import service_account
+from google.oauth2.service_account import Credentials
+import requests
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 web_server = Flask(__name__)
@@ -147,7 +150,7 @@ def guardar_datos_usuario(message):
     texto += f"Banco entrada:{gastos[message.chat.id]['banco_salida']}\n"
     if gastos[message.chat.id]['cargo'] == "BICICLETA":
         sh.append_row(
-        [str(gastos[message.chat.id]['gasto']),
+        [str(f"Bicicleta de {gastos[message.chat.id]['banco_entrada']} a {gastos[message.chat.id]['banco_salida']} por {gastos[message.chat.id]['monto']} "),
         int(gastos[message.chat.id]['monto']),
         str(gastos[message.chat.id]['banco_entrada']),
         str(gastos[message.chat.id]['banco_salida']),
@@ -157,7 +160,7 @@ def guardar_datos_usuario(message):
         str(gastos[message.chat.id]['cargo'])]
         )
         sh.append_row(
-        [str(gastos[message.chat.id]['gasto']),
+        [str(f"Bicicleta de {gastos[message.chat.id]['banco_entrada']} a {gastos[message.chat.id]['banco_salida']} por {gastos[message.chat.id]['monto']} "),
         int(gastos[message.chat.id]['monto']*-1),
         str(gastos[message.chat.id]['banco_salida']),
         str(gastos[message.chat.id]['banco_entrada']),
@@ -289,6 +292,38 @@ def cmd_cuentasbip(message):
         texto = "Transporte añadido"
         markup = ReplyKeyboardRemove()
         bot.send_message(message.chat.id, texto, parse_mode='html', reply_markup= markup)
+
+@bot.message_handler(commands = ['pdfg'])
+def cmd_pdfg(message):
+    scopes = [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive'
+    ]
+    credentials = Credentials.from_service_account_file('creds.json',scopes=scopes)
+    print(credentials)
+    print(type(credentials))
+    spreadsheet = gc.open('CuentasAGV').get_worksheet(2)
+    titles_list = []
+    for spreadsheet in gc.openall('CuentasAGV'):
+        titles_list.append({'title': spreadsheet.title, 'id': spreadsheet.id})
+    id1 = titles_list[0]['id']
+    print(id1)
+    url = 'https://docs.google.com/spreadsheets/export?format=pdf&id=' + str(id1)
+    #token_uri
+    #access_token = credentials.token_uri()
+    #access_token = credentials.get_access_token()
+    #print(access_token)
+    #print(type(access_token))
+    #print(url)
+    #headers = {'Authorization': 'Bearer ' + "b74b9b4e6d6c61ffc7e5888cfb94097a31831e33"}
+    headers = {'Authorization': 'Bearer ' + credentials.create_delegated("vagvasquez1234@gmail.com").get_access_token().access_token}
+    res = requests.get(url, headers=headers)
+    #https://www.programcreek.com/python/example/121567/google.oauth2.credentials.Credentials
+    https://google-auth.readthedocs.io/en/stable/reference/google.oauth2.credentials.html
+    #res = requests.get(url)
+    with open('CuentasAGV' + ".pdf", 'wb') as f:
+        f.write(res.content)
+    #https://stackoverflow.com/questions/70914130/gspread-get-also-none-values-when-reading
 
 
 
